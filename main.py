@@ -1,39 +1,55 @@
-# pip install cryptography
-
-# secret key generation
 from cryptography.fernet import Fernet
 
-key = Fernet.generate_key()
-# print(key)
+# Helper Functions
+def write_to_file(filename, data, mode='wb'):
+    """Writes data to a file."""
+    with open(filename, mode) as file:
+        file.write(data)
 
-# Encryption
-fernet = Fernet(key)
+def read_from_file(filename, mode='rb'):
+    """Reads data from a file."""
+    with open(filename, mode) as file:
+        return file.read()
 
-# wrting key
-with open('key.key', 'wb') as filekey:
-    filekey.write(key)
+# Key Management
+def generate_and_save_key(key_filename):
+    """Generates a key and saves it to a file."""
+    key = Fernet.generate_key()
+    write_to_file(key_filename, key)
+    return key
 
-# reading key
-with open('key.key', 'rb') as filekey:
-    key=filekey.read()
+def load_key(key_filename):
+    """Loads a key from a file."""
+    return read_from_file(key_filename)
 
-with open('patient.jpg', 'rb') as file:
-    original_file = file.read()
+# Encryption and Decryption
+def encrypt_file(input_filename, output_filename, key):
+    """Encrypts a file and saves the encrypted version."""
+    fernet = Fernet(key)
+    original_data = read_from_file(input_filename)
+    encrypted_data = fernet.encrypt(original_data)
+    write_to_file(output_filename, encrypted_data)
 
-encrypted = fernet.encrypt(original_file)
+def decrypt_file(input_filename, output_filename, key):
+    """Decrypts a file and saves the decrypted version."""
+    fernet = Fernet(key)
+    encrypted_data = read_from_file(input_filename)
+    decrypted_data = fernet.decrypt(encrypted_data)
+    write_to_file(output_filename, decrypted_data)
 
-with open('encrypted patient.jpg', 'wb') as file:
-    file.write(encrypted)
+# Main Execution
+if __name__ == "__main__":
+    key_file = 'key.key'
+    original_file = 'patient.jpg'
+    encrypted_file = 'encrypted_patient.jpg'
+    decrypted_file = 'decrypted_patient.jpg'
 
+    # Generate or load key
+    try:
+        key = load_key(key_file)
+    except FileNotFoundError:
+        key = generate_and_save_key(key_file)
 
-# DECRYPTION
-
-fernet = Fernet(key)
-
-with open('encrypted patient.jpg', 'rb') as file:
-    encrypted_file = file.read()
-    
-decrypted = fernet.decrypt(encrypted_file)
-
-with open('decrypted patient.jpg', 'wb') as file:
-    file.write(decrypted)
+    # Encrypt and decrypt
+    encrypt_file(original_file, encrypted_file, key)
+    decrypt_file(encrypted_file, decrypted_file, key)
